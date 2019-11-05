@@ -14,7 +14,7 @@
 #include <atca_execution.h>
 #include <atca_basic.h>
 #include <atca_helpers.h>
-
+#include <i2c_bitbang_arduino.h>
 #define ATCAPRINTF
 
 #define PUBLIC_KEY_SIZE 64
@@ -30,6 +30,23 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 
+void v1_configure(uint8_t  slave_address, uint8_t  bus, uint32_t baud, uint32_t pin_sda, uint32_t pin_scl)
+{
+	extern I2CBuses i2c_buses_default;
+	extern ATCAIfaceCfg cfg_ateccx08a_i2c_default;
+	#ifdef ARDUINO
+	cfg_ateccx08a_i2c_default.iface.atcai2c.slave_address = slave_address,
+    cfg_ateccx08a_i2c_default.iface.atcai2c.bus           = bus,
+    cfg_ateccx08a_i2c_default.iface.atcai2c.baud          = baud,
+	#else
+	cfg_ateccx08a_i2c_default.atcai2c.slave_address = slave_address,
+    cfg_ateccx08a_i2c_default.atcai2c.bus           = bus,
+    cfg_ateccx08a_i2c_default.atcai2c.baud          = baud,
+	#endif
+	i2c_buses_default.pin_sda[0] = pin_sda;
+	i2c_buses_default.pin_scl[0] = pin_scl;
+
+}
 
 ATCA_STATUS v1_init()
 {

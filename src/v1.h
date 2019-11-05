@@ -1,11 +1,12 @@
 #ifndef __SECURE_ELEM_ABSTR_ATECC__
 #define __SECURE_ELEM_ABSTR_ATECC__
 
-#ifdef __SEA_V1__
+
 
 #include "types.h"
+#include <atca_status.h>
 
-extern "C" {
+void v1_configure(uint8_t  slave_address, uint8_t  bus, uint32_t baud, uint32_t pin_sda, uint32_t pin_scl);
 ATCA_STATUS v1_init();
 ATCA_STATUS v1_close_i2c();
 ATCA_STATUS v1_get_random(uint8_t* rand_out , uint8_t randomLen);
@@ -19,9 +20,8 @@ ATCA_STATUS v1_write_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen);
 ATCA_STATUS v1_read_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen);
 ATCA_STATUS v1_get_sha256(uint8_t* pMessage, uint16_t msgLen, uint8_t* sha, uint16_t*shaLen);
 ATCA_STATUS v1_save_key_pair(uint16_t slot, const uint8_t *public_key);
-}
 
 
-#endif // __SEA_V1__
+
 
 #endif
