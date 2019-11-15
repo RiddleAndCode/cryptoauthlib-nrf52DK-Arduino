@@ -1,11 +1,23 @@
 #include <stdint.h>
+
+
+#define V1
 #define __SEA_V1__
 
+#ifdef V1
 #include "v1.h"
+#endif
 
+#ifdef V2
+#include "v2.h"
+#endif
+
+#ifdef V3
+#include "v3.h"
+#endif
 
 #include "sec_elem_abstr.h"
-
+#include "ses.h"
 
 
 
@@ -18,6 +30,7 @@
 #define SIG_LEN 128
 #define PRINT_LOG
 
+
 SE_STATUS se_configure_hardware(uint8_t  slave_address, uint8_t  bus, uint32_t baud, uint32_t pin_sda, uint32_t pin_scl)
 {
 #ifdef __SEA_V2__
@@ -29,7 +42,6 @@ SE_STATUS se_configure_hardware(uint8_t  slave_address, uint8_t  bus, uint32_t b
 #endif
 
 }
-
 
 SE_STATUS se_init(uint8_t mode)
 {
@@ -189,7 +201,64 @@ SE_STATUS se_wipe_device(uint8_t index)
 #endif
 }
 
+SE_STATUS se_secure_storage_personalize(bool lock)
+{
+	bool ret = false;
+	puts("\n\n\t     ... Running configure ... \n\n\t... This may take up to a minute ...\n");
+	ret = ses_configure(lock);
+	if (ret)
+		return SE_SUCCESS;
+	else
+		return SE_COM_FAIL;
+}
 
+SE_STATUS se_secure_store(uint8_t zone ,uint8_t * data, int16_t len)
+{
+	uint8_t ret = -1;
+	ret = ses_write(zone, data, len);
+	if (ret == 0x00)
+		return SE_SUCCESS;
+	else
+		return SE_COM_FAIL;
+}
+
+SE_STATUS se_secure_read(uint8_t zone ,uint8_t * data, int16_t len)
+{
+	uint8_t ret = -1;
+	ret = ses_read(zone, data, len);
+	if (ret == 0x00)
+		return SE_SUCCESS;
+	else
+		return SE_COM_FAIL;
+}
+
+SE_STATUS se_authenticate(uint8_t slot)
+{
+	bool ret = false;
+	ret = ses_authenticate(slot);
+	if (ret)
+		return SE_SUCCESS;
+	else
+		return SE_COM_FAIL;
+}
+
+SE_STATUS se_secure_storage_init()
+{
+	int ret = ses_open();
+	if (ret == 0)
+		return SE_SUCCESS;
+	else
+		return SE_GEN_FAIL;
+}
+
+SE_STATUS se_secure_storage_close()
+{
+	int ret = ses_close();
+	if (ret == 0)
+		return SE_SUCCESS;
+	else
+		return SE_GEN_FAIL;
+}
 
 #pragma GCC diagnostic pop
 

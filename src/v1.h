@@ -1,6 +1,9 @@
 #ifndef __SECURE_ELEM_ABSTR_ATECC__
 #define __SECURE_ELEM_ABSTR_ATECC__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 #include "types.h"
@@ -23,5 +26,7 @@ ATCA_STATUS v1_save_key_pair(uint16_t slot, const uint8_t *public_key);
 
 
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif

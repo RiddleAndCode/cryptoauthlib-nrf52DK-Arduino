@@ -48,7 +48,7 @@
 #include "Arduino.h"
 #include "i2c_bitbang_arduino.h"
 
-
+#define I2C_DELAY 20
 uint32_t pin_sda, pin_scl;
 
 I2CBuses i2c_buses_default = {
@@ -115,30 +115,30 @@ void ENABLE_INTERRUPT()
 }
 void I2C_CLOCK_DELAY_WRITE_LOW()
 {
-    delayMicroseconds(1);
+    delayMicroseconds(I2C_DELAY);
 }
 void I2C_CLOCK_DELAY_WRITE_HIGH()
 {
-    delayMicroseconds(1);
+    delayMicroseconds(I2C_DELAY);
 }
 void I2C_CLOCK_DELAY_READ_LOW()
 {
-    delayMicroseconds(1);
+    delayMicroseconds(I2C_DELAY);
 }
 void I2C_CLOCK_DELAY_READ_HIGH()
 {
-    delayMicroseconds(1);
+    delayMicroseconds(I2C_DELAY);
 }
 
 //! This delay plus I2C_CLOCK_HIGH and I2C_CLOCK_LOW takes about 1.3 us.
 void I2C_CLOCK_DELAY_SEND_ACK()
 {
-    delayMicroseconds(1); // 1
+    delayMicroseconds(I2C_DELAY); // 1
 }
 //! This delay is inserted to make the Start and Stop hold time at least 250 ns.
 void I2C_HOLD_DELAY()
 {
-    delayMicroseconds(1);
+    delayMicroseconds(I2C_DELAY);
 }
 
 
@@ -382,3 +382,97 @@ void i2c_receive_bytes(uint8_t count, uint8_t *data)
 
 	i2c_send_stop();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+char i2c_read_byte(unsigned char* rcvdata, unsigned char bytes, unsigned char index)
+{
+	unsigned char byte = 0;
+	unsigned char bit = 0;
+	//release SDA
+	I2C_SET_INPUT();
+	for (bit = 0; bit < 8; bit++)
+	{
+		I2C_CLOCK_HIGH();
+		if(I2C_DATA_IN())
+			byte|= (1 << (7- bit));
+		delayMicroseconds(1); // 0.6
+		I2C_CLOCK_LOW();//goes low
+		delayMicroseconds(1); // 0.6
+	}
+	rcvdata[index] = byte;
+	//take SDA
+	I2C_SET_OUTPUT();
+	if(index < (bytes-1))
+	{
+		I2C_DATA_LOW();
+		I2C_CLOCK_HIGH(); //goes high for the 9th clock
+		delayMicroseconds(1); // 0.6
+		//Pull SCL low
+		I2C_CLOCK_LOW(); //end of byte with acknowledgment. 
+		//release SDA
+		I2C_DATA_HIGH(1);
+		delayMicroseconds(1); // 0.6
+	}
+	else //send NACK on the last byte
+	{
+		I2C_DATA_HIGH();
+		I2C_CLOCK_HIGH(); //goes high for the 9th clock
+		delayMicroseconds(1); // 0.6
+		//Pull SCL low
+		I2C_CLOCK_LOW(); //end of byte with acknowledgment. 
+		//release SDA
+		delayMicroseconds(1); // 0.6
+	}
+
+	return 1;
+
+}
+
+
+char i2c_write_byte(unsigned char byte)
+{
+	char bit;
+		I2C_SET_OUTPUT();
+
+	for (bit = 0; bit < 8; bit++) 
+	{
+
+		if (byte & 0x80)
+			I2C_DATA_HIGH();
+		else
+			I2C_DATA_LOW();
+		I2C_CLOCK_HIGH(); //goes high for the 9th clock
+		delayMicroseconds(1); // 0.6
+		I2C_CLOCK_LOW(); //end of byte with acknowledgment. 
+            byte <<= 1;
+		delayMicroseconds(1); // 0.6
+	}
+	//release SDA
+	I2C_SET_INPUT();
+	I2C_CLOCK_HIGH(); //goes high for the 9th clock
+	//Check for acknowledgment
+	if(I2C_DATA_IN())
+	{
+		return 0;
+	}
+	delayMicroseconds(1);
+	//Pull SCL low
+	I2C_CLOCK_LOW(); //end of byte with acknowledgment. 
+	//take SDA
+	I2C_SET_OUTPUT();
+	delayMicroseconds(1);
+	return 1;
+
+}
+
+

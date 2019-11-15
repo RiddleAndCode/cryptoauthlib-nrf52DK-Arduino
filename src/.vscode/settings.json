@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "atca_status.h": "c",
+        "stdio.h": "c",
+        "i2c_bitbang_arduino.h": "c",
+        "i2c_phys.h": "c"
+    }
+}

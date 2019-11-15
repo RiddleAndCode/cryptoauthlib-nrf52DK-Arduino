@@ -154,6 +154,10 @@ void i2c_receive_byte(uint8_t *data);
  * \param[in]  count  number of bytes to receive
  */
 void i2c_receive_bytes(uint8_t count, uint8_t *data);
+void i2c_receive_bytes_nack(uint8_t count, uint8_t *data);
+void I2C_ENABLE();
+void I2C_DISABLE();
+char i2c_write_byte(unsigned char byte);
 
 #ifdef __cplusplus
 }

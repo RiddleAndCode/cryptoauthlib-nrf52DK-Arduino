@@ -4,7 +4,9 @@
  * Created: 9/21/2018 7:16:19 AM
  *  Author: pvallone
  */ 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef AES132_IMPL_H_
 #define AES132_IMPL_H_
@@ -55,3 +57,7 @@ void aes132_crunch(uint16_t count, uint8_t *outResult);
 
 
 #endif /* AES132_IMPL_H_ */
+
+#ifdef __cplusplus
+}
+#endif
