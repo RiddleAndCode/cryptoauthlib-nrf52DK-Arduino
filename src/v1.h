@@ -22,7 +22,7 @@ ATCA_STATUS v1_verify_external(const uint8_t *message, const uint8_t *signature,
 ATCA_STATUS v1_write_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen);
 ATCA_STATUS v1_read_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen);
 ATCA_STATUS v1_get_sha256(uint8_t* pMessage, uint16_t msgLen, uint8_t* sha, uint16_t*shaLen);
-ATCA_STATUS v1_save_key_pair(uint16_t slot, const uint8_t *public_key);
+
 
 
 

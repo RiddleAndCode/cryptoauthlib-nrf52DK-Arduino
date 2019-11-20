@@ -17,6 +17,7 @@ uint16_t ses_config_zone(uint8_t id, bool disable_auth);
 bool ses_configure(bool lock);
 int8_t ses_open();
 int8_t ses_close();
+void ses_set_pin(uint8_t *pin, uint16_t pin_len);
 
 //! Poll this many ms for the device being ready for access.
 #define AES132_DEVICE_READY_TIMEOUT      (100)

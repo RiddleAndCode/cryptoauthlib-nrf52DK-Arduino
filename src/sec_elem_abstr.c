@@ -115,7 +115,6 @@ SE_STATUS se_sign_raw(uint8_t index, const uint8_t *msg, uint16_t msglen, uint8_
 }
 
 
-
 SE_STATUS se_generate_keypair(uint8_t index)
 {
 #ifdef __SEA_V2__
@@ -131,8 +130,6 @@ SE_STATUS se_save_key_pair(uint8_t index, const uint8_t *publicKey, uint16_t pub
 {
 #ifdef __SEA_V2__
 	return v2_save_key_pair( index, publicKey, publicKeyLen, privateKey, privateKeyLen);
-#elif defined __SEA_V1__
-	return v1_save_key_pair( index, publicKey);
 #else
 	return SE_UNKNOWN;
  #endif
@@ -201,6 +198,13 @@ SE_STATUS se_wipe_device(uint8_t index)
 #endif
 }
 
+SE_STATUS se_secure_storage_set_pin(uint8_t *pin, uint16_t pin_len)
+{
+	ses_set_pin(pin,pin_len);
+	return SE_SUCCESS;
+}
+
+
 SE_STATUS se_secure_storage_personalize(bool lock)
 {
 	bool ret = false;
@@ -212,7 +216,7 @@ SE_STATUS se_secure_storage_personalize(bool lock)
 		return SE_COM_FAIL;
 }
 
-SE_STATUS se_secure_store(uint8_t zone ,uint8_t * data, int16_t len)
+SE_STATUS se_secure_store(uint8_t zone ,uint8_t * data, uint16_t len)
 {
 	uint8_t ret = -1;
 	ret = ses_write(zone, data, len);
@@ -222,7 +226,7 @@ SE_STATUS se_secure_store(uint8_t zone ,uint8_t * data, int16_t len)
 		return SE_COM_FAIL;
 }
 
-SE_STATUS se_secure_read(uint8_t zone ,uint8_t * data, int16_t len)
+SE_STATUS se_secure_read(uint8_t zone ,uint8_t * data, uint16_t len)
 {
 	uint8_t ret = -1;
 	ret = ses_read(zone, data, len);

@@ -266,41 +266,6 @@ ATCA_STATUS v1_get_sha256(uint8_t* pMessage, uint16_t msgLen, uint8_t* sha, uint
 	return status;
 }
 
-ATCA_STATUS v1_save_key_pair(uint16_t slot, const uint8_t *public_key)
-{
-	ATCA_STATUS status = ATCA_SUCCESS;
-	uint8_t public_key_formatted[ATCA_BLOCK_SIZE * 3];
-	int block;
-
-	// Check the pointers
-	if (public_key == NULL)
-	{
-		return (ATCA_BAD_PARAM);
-	}
-
-	// The 64 byte P256 public key gets written to a 72 byte slot in the following pattern
-	// | Block 1                     | Block 2                                      | Block 3       |
-	// | Pad: 4 Bytes | PubKey[0:27] | PubKey[28:31] | Pad: 4 Bytes | PubKey[32:55] | PubKey[56:63] |
-
-	memset(public_key_formatted, 0, sizeof(public_key_formatted));
-	memcpy(&public_key_formatted[4], &public_key[0], 32);   // Move X to padded position
-	memcpy(&public_key_formatted[40], &public_key[32], 32); // Move Y to padded position
-
-	// Using this instead of atcab_write_zone_bytes, as that function doesn't work when
-	// the data zone is unlocked
-	for (block = 0; block < 3; block++)
-	{
-		status = atcab_write_zone(ATCA_ZONE_DATA, slot, block, 0, &public_key_formatted[ATCA_BLOCK_SIZE * block], ATCA_BLOCK_SIZE);
-		if (status != ATCA_SUCCESS)
-		{
-			break;
-		}
-	}
-
-	return (status);
-
-
-}
 
 #pragma GCC diagnostic pop
 

@@ -4,31 +4,40 @@
 // Read datasheet for more information
 #include <assert.h>
 #include "ses.h"
-#include "keys.h"
-#include "aes132_helper.h"
-#include "aes132_impl.h"
+
 
 int fd = 0;
+uint8_t default_pin[32] = {0x83, 0x64, 0x0d, 0x8b, 0x8d, 0x1f, 0x59, 0x11, 0x3b, 0x3a, 0xea, 0x53, 0xe7, 0x87, 0x34, 0x2b, 0xe1, 0x37, 0xff, 0xf1, 0x8c, 0x61, 0x5c, 0xcb, 0x33, 0x62, 0x56, 0xf9, 0xce, 0x1e, 0x86, 0x77}; //sha256 of r3c
+uint8_t slot_5_key[16];
+uint8_t slot_6_key[16];
 
-__attribute__((weak)) uint8_t* get_key(uint8_t key_num)
+uint8_t* get_key(uint8_t key_num)
 {
   assert (key_num < 3);
+
   switch (key_num)
   {
   case 0:
-    return key00;
-    break;
+    return default_pin;
   case 1:
-    return key01;
-    break;
+    memcpy(slot_5_key,default_pin,16);
+    return slot_5_key;
   case 2:
-    return key02;
-    break;
+    memcpy(slot_6_key,(default_pin + 16),16);
+    return slot_6_key;
   default:
-    return key00;
-    break;
+    return default_pin;
   }
 }
+void ses_set_pin(uint8_t *pin, uint16_t pin_len)
+{
+
+  assert(pin != NULL && pin_len !=0);
+  memcpy(default_pin, pin, pin_len);
+  memset(pin,0,pin_len);
+
+}
+
 uint8_t ses_config_pin(uint8_t *key, uint8_t id)
 {
   uint8_t ret = AES132_DEVICE_RETCODE_KEY_ERROR;
