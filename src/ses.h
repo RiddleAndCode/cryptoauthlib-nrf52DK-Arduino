@@ -8,16 +8,15 @@ extern "C" {
 #include <string.h>
 #include <stdint.h>
 
-
-uint8_t ses_write(uint8_t zone ,uint8_t * data, int16_t len);
-uint8_t ses_read(uint8_t zone ,uint8_t * data, int16_t len);
-bool ses_authenticate(uint8_t slot);
-uint8_t ses_config_pin(uint8_t *key, uint8_t id);
-uint16_t ses_config_zone(uint8_t id, bool disable_auth);
-bool ses_configure(bool lock);
+uint8_t ses_write(uint8_t,uint8_t * , int16_t );
+uint8_t ses_read(uint8_t  ,uint8_t * , int16_t );
+bool ses_authenticate(uint8_t , uint8_t*);
+uint8_t ses_config_pin(uint8_t *, uint8_t );
+uint16_t ses_config_zone(uint8_t , bool );
+bool ses_configure(bool , uint8_t* , uint8_t* , uint8_t* );
 int8_t ses_open();
 int8_t ses_close();
-void ses_set_pin(uint8_t *pin, uint16_t pin_len);
+
 
 //! Poll this many ms for the device being ready for access.
 #define AES132_DEVICE_READY_TIMEOUT      (100)

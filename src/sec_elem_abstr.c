@@ -198,18 +198,12 @@ SE_STATUS se_wipe_device(uint8_t index)
 #endif
 }
 
-SE_STATUS se_secure_storage_set_pin(uint8_t *pin, uint16_t pin_len)
-{
-	ses_set_pin(pin,pin_len);
-	return SE_SUCCESS;
-}
 
-
-SE_STATUS se_secure_storage_personalize(bool lock)
+SE_STATUS se_secure_storage_personalize(bool lock, uint8_t* key_0, uint8_t* key_1, uint8_t* key_2)
 {
 	bool ret = false;
 	puts("\n\n\t     ... Running configure ... \n\n\t... This may take up to a minute ...\n");
-	ret = ses_configure(lock);
+	ret = ses_configure(lock,key_0,key_1,key_2);
 	if (ret)
 		return SE_SUCCESS;
 	else
@@ -236,10 +230,10 @@ SE_STATUS se_secure_read(uint8_t zone ,uint8_t * data, uint16_t len)
 		return SE_COM_FAIL;
 }
 
-SE_STATUS se_authenticate(uint8_t slot)
+SE_STATUS se_authenticate(uint8_t slot, uint8_t *key)
 {
 	bool ret = false;
-	ret = ses_authenticate(slot);
+	ret = ses_authenticate(slot,key);
 	if (ret)
 		return SE_SUCCESS;
 	else

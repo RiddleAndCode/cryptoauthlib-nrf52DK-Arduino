@@ -4,39 +4,12 @@
 // Read datasheet for more information
 #include <assert.h>
 #include "ses.h"
-
+#include "aes132_helper.h"
+#include "aes132_impl.h"
 
 int fd = 0;
 uint8_t default_pin[32] = {0x83, 0x64, 0x0d, 0x8b, 0x8d, 0x1f, 0x59, 0x11, 0x3b, 0x3a, 0xea, 0x53, 0xe7, 0x87, 0x34, 0x2b, 0xe1, 0x37, 0xff, 0xf1, 0x8c, 0x61, 0x5c, 0xcb, 0x33, 0x62, 0x56, 0xf9, 0xce, 0x1e, 0x86, 0x77}; //sha256 of r3c
-uint8_t slot_5_key[16];
-uint8_t slot_6_key[16];
 
-uint8_t* get_key(uint8_t key_num)
-{
-  assert (key_num < 3);
-
-  switch (key_num)
-  {
-  case 0:
-    return default_pin;
-  case 1:
-    memcpy(slot_5_key,default_pin,16);
-    return slot_5_key;
-  case 2:
-    memcpy(slot_6_key,(default_pin + 16),16);
-    return slot_6_key;
-  default:
-    return default_pin;
-  }
-}
-void ses_set_pin(uint8_t *pin, uint16_t pin_len)
-{
-
-  assert(pin != NULL && pin_len !=0);
-  memcpy(default_pin, pin, pin_len);
-  memset(pin,0,pin_len);
-
-}
 
 uint8_t ses_config_pin(uint8_t *key, uint8_t id)
 {
@@ -61,11 +34,11 @@ uint16_t ses_config_zone(uint8_t id, bool disable_auth)
     data[0] = AES132_ZONE_CONFIG_AUTH_READ | AES132_ZONE_CONFIG_AUTH_WRITE;
 
   if(id == 5)
-    data[1] = (0x01 << 4);
+    data[1] = (0x00 << 4);
   else if(id == 6)
-    data[1] = (0x02 << 4);
+    data[1] = (0x01 << 4);
   else
-    data[1] = 0;
+    data[1] = (0x02 << 4);;
 
   data[2] = 0x00;
   data[3] = 0x00;
@@ -74,7 +47,7 @@ uint16_t ses_config_zone(uint8_t id, bool disable_auth)
   return ret ;
 }
 
-bool ses_configure(bool lock)
+bool ses_configure(bool lock, uint8_t* key_0, uint8_t* key_1, uint8_t* key_2)
 {
 
     uint8_t config[16] = {0};
@@ -90,17 +63,32 @@ bool ses_configure(bool lock)
 
         puts("Keys are Locked !");
     }
-    if(ses_config_pin(get_key(0), 0) != expected_key_lock)
+    if (key_0 == NULL)
+    {
+      key_0 = default_pin;
+    }
+
+    if (key_1 == NULL)
+    {
+      key_1 = default_pin;
+    }
+
+    if (key_2 == NULL)
+    {
+      key_2 = default_pin;
+    }
+
+    if(ses_config_pin(key_2, 2) != expected_key_lock)
     {
         return false;
     }
 
-    if(ses_config_pin(get_key(1), 1) != expected_key_lock)
+    if(ses_config_pin(key_1, 1) != expected_key_lock)
     {
         return false;
     }
 
-    if(ses_config_pin(get_key(2), 2) != expected_key_lock)
+    if(ses_config_pin(key_0, 0) != expected_key_lock)
     {
         return false;
     }
@@ -118,11 +106,11 @@ bool ses_configure(bool lock)
     return ret == expected_key_lock;
 }
 
-uint8_t ses_write(uint8_t zone ,uint8_t * data, int16_t len)
+uint8_t ses_write(uint8_t slot ,uint8_t * data, int16_t len)
 {
   uint8_t ret = AES132_DEVICE_RETCODE_KEY_ERROR;
 
-  assert(zone <= 15);
+  assert(slot <= 15);
   assert(len <= 256);
 
   if (len > 32)
@@ -130,7 +118,7 @@ uint8_t ses_write(uint8_t zone ,uint8_t * data, int16_t len)
     size_t i = 0;
     while(len > 0)
     {
-      ret = aes132m_write_memory((len >= 32 ? 32 : len), AES132_USER_ZONE_ADDR(zone) + (i*32), data);
+      ret = aes132m_write_memory((len >= 32 ? 32 : len), AES132_USER_ZONE_ADDR(slot) + (i*32), data);
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
       {
         return -1;
@@ -144,17 +132,17 @@ uint8_t ses_write(uint8_t zone ,uint8_t * data, int16_t len)
 
   else
   {
-    ret = aes132m_write_memory(len, AES132_USER_ZONE_ADDR(zone), data);
+    ret = aes132m_write_memory(len, AES132_USER_ZONE_ADDR(slot), data);
   }
 
   return ret;
 }
 
-uint8_t ses_read(uint8_t zone ,uint8_t * data, int16_t len)
+uint8_t ses_read(uint8_t slot ,uint8_t * data, int16_t len)
 {
   uint8_t ret = AES132_DEVICE_RETCODE_KEY_ERROR;
 
-  assert(zone <= 15);
+  assert(slot <= 15);
   assert(len <= 256);
 
   if (len > 32)
@@ -163,7 +151,7 @@ uint8_t ses_read(uint8_t zone ,uint8_t * data, int16_t len)
     uint8_t buffer[32] = {0};
     while(len > 0)
     {
-      ret =  aes132_read_size(buffer,AES132_USER_ZONE_ADDR(zone) + (i*32), (len >= 32 ? 32 : len));  //aes132m_read_memory((len >= 32 ? 32 : len), AES132_USER_ZONE_ADDR(zone) + (i*32), buffer); 
+      ret =  aes132_read_size(buffer,AES132_USER_ZONE_ADDR(slot) + (i*32), (len >= 32 ? 32 : len));  //aes132m_read_memory((len >= 32 ? 32 : len), AES132_USER_ZONE_ADDR(slot) + (i*32), buffer);
 
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
       {
@@ -181,12 +169,12 @@ uint8_t ses_read(uint8_t zone ,uint8_t * data, int16_t len)
 
   else
   {
-    ret = aes132_read_size(data, AES132_USER_ZONE_ADDR(zone), len);
+    ret = aes132_read_size(data, AES132_USER_ZONE_ADDR(slot), len);
   }
 
   return ret;
 }
-bool ses_authenticate(uint8_t slot)
+bool ses_authenticate(uint8_t slot, uint8_t *key)
 {
   uint8_t ret = AES132_DEVICE_RETCODE_KEY_ERROR;
 
@@ -196,28 +184,31 @@ bool ses_authenticate(uint8_t slot)
       break;
 
     case 5:
+      assert(key != NULL);
       ret = aes132_nonce();
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
-      ret = aes132_inbound_auth_key(1, get_key(1), (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
+      ret = aes132_inbound_auth_key(0, key, (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
       break;
 
     case 6:
+      assert(key != NULL);
       ret = aes132_nonce();
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
-      ret = aes132_inbound_auth_key(2, get_key(2), (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
+      ret = aes132_inbound_auth_key(1, key, (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
       break;
 
     default:
+      assert(key != NULL);
       ret = aes132_nonce();
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
-      ret = aes132_inbound_auth_key(0, get_key(0), (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
+      ret = aes132_inbound_auth_key(2, key, (AES132_AUTH_USAGE_READ_OK | AES132_AUTH_USAGE_WRITE_OK | AES132_AUTH_USAGE_KEY_USE));
       if (ret != AES132_DEVICE_RETCODE_SUCCESS)
         return false;
       break;
