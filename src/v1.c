@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <assert.h>
 #include <sys/time.h>
 #include <stdlib.h>
 
@@ -102,8 +101,8 @@ ATCA_STATUS  v1_get_random(uint8_t* rand_out , uint8_t randomLen)
 ATCA_STATUS  v1_get_pubkey(uint8_t index , uint8_t* publicKey)
 {
 	ATCA_STATUS rv = ATCA_BAD_PARAM;
-	if (index != 0 && index != 2 && index != 7 )
-	return ((atcab_read_pubkey(index,publicKey)));
+	if (!(index < 10))
+		return ATCA_BAD_PARAM;
 	rv = atcab_get_pubkey( index, publicKey);
 	return rv;
 }
@@ -126,6 +125,8 @@ ATCA_STATUS  v1_sign_raw(uint16_t key_id, const uint8_t *msg, uint16_t msglen, u
 
 ATCA_STATUS  v1_generate_keypair(uint8_t index)
 {
+	if (!(index < 10))
+		return ATCA_BAD_PARAM;
 	ATCA_STATUS rv;
 	uint8_t public_key[64] = {0};
 
@@ -209,18 +210,20 @@ ATCA_STATUS  v1_verify_external(const uint8_t *message, const uint8_t *signature
     return (status);
 }
 
-ATCA_STATUS v1_write_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen)
+ATCA_STATUS v1_write_data(uint16_t index, uint8_t *data, uint16_t dataLen)
 {
-	ATCA_STATUS status = atcab_write_bytes_zone(ATCA_ZONE_DATA, 15, dataOffset, data, dataLen);
+	if (!(index > 9 && index < 16))
+		return ATCA_BAD_PARAM; 
+	ATCA_STATUS status = atcab_write_bytes_zone(ATCA_ZONE_DATA, index, 0, data, dataLen);
 	return (status);
-
 }
 
-ATCA_STATUS v1_read_data(uint16_t dataOffset, uint8_t *data, uint16_t dataLen)
+ATCA_STATUS v1_read_data(uint16_t index, uint8_t *data, uint16_t dataLen)
 {
-	ATCA_STATUS status = atcab_read_bytes_zone(ATCA_ZONE_DATA, 15, dataOffset, data, dataLen);
+	if (!(index > 9 && index < 16))
+		return ATCA_BAD_PARAM; 
+	ATCA_STATUS status = atcab_read_bytes_zone(ATCA_ZONE_DATA, index, 0, data, dataLen);
 	return (status);
-
 }
 
 ATCA_STATUS v1_get_sha256(uint8_t* pMessage, uint16_t msgLen, uint8_t* sha, uint16_t*shaLen)
